@@ -80,6 +80,8 @@ def train_memory(model, memory, dataloader, criterion, lr=10, num_epochs=1000):
         param.requires_grad = False
 
     model.train()
+    loss_history = []
+
     for epoch in range(num_epochs):
         for inputs, targets in dataloader:
             inputs = inputs.to(device)
@@ -92,21 +94,25 @@ def train_memory(model, memory, dataloader, criterion, lr=10, num_epochs=1000):
             optimizer.step()
             memory.grad.zero_()
 
-            # Optional: Clamp memory values
+            loss_history.append(loss.item())
+
+            # Optional: Clamp memory values to keep them within a desired range
             with torch.no_grad():
                 memory.clamp_(-1, 1)
         
         if (epoch + 1) % 100 == 0:
             print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
-def train_model(model, memory, dataloader, criterion, lr=0.01, num_epochs=100):
-    memory = memory.to(device)  # Move memory to GPU
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    return loss_history
+
+def train_model(model, memory, dataloader, criterion, lr=10, num_epochs=100):
+    optimizer = optim.Adam(model.parameters())
 
     for param in model.parameters():
         param.requires_grad = True
 
-    memory.requires_grad_(False)
+    memory.requires_grad_(False)  # Disable gradient tracking
+    loss_history = []
 
     model.train()
     for epoch in range(num_epochs):
@@ -119,9 +125,16 @@ def train_model(model, memory, dataloader, criterion, lr=0.01, num_epochs=100):
             loss = criterion(outputs, targets.argmax(dim=1))
             loss.backward()
             optimizer.step()
-
+            loss_history.append(loss.item())
         if (epoch + 1) % 10 == 0:
             print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    return loss_history
+
+def visualize_loss(loss_history):
+    plt.plot(loss_history)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.show()
 
 def visualize_memory(memory):
     # Move to CPU for visualization
