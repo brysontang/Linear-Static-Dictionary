@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from util.data_preprocessing import encode_grid, pad_data_to_30x30, visualize_grid
 
 # Get the device (GPU if available, otherwise CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
 
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
